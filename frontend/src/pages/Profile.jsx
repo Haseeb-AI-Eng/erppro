@@ -33,7 +33,7 @@ export default function Profile() {
 
   return (
     <div className="space-y-5 animate-slide-up max-w-2xl">
-      <h1 className="text-2xl font-bold text-white">My Profile</h1>
+      <h1 className="text-2xl font-bold text-slate-900">My Profile</h1>
 
       {/* Profile Card */}
       <div className="card">

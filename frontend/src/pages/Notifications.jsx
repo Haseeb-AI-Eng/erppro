@@ -20,7 +20,7 @@ export default function Notifications() {
   return (
     <div className="space-y-5 animate-slide-up">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-white">Notifications</h1><p className="text-gray-400 text-sm">{data?.unreadCount || 0} unread</p></div>
+        <div><h1 className="text-2xl font-bold text-slate-900">Notifications</h1><p className="text-gray-400 text-sm">{data?.unreadCount || 0} unread</p></div>
         {data?.unreadCount > 0 && <button onClick={markAllRead} className="btn-secondary"><CheckCheck size={14}/>Mark all read</button>}
       </div>
 

@@ -88,7 +88,7 @@ export default function App() {
           <Route
             path="chat"
             element={
-              <ProtectedRoute roles={['org_owner', 'hr_manager', 'team_lead']}>
+              <ProtectedRoute roles={['org_owner', 'hr_manager', 'team_lead', 'employee']}>
                 <Chat />
               </ProtectedRoute>
             }

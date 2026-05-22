@@ -23,7 +23,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6 animate-slide-up">
       <div>
-        <h1 className="text-2xl font-bold text-white">Super Admin Panel</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Super Admin Panel</h1>
         <p className="text-gray-400 text-sm">Platform overview and control center</p>
       </div>
 

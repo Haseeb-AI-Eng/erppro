@@ -42,7 +42,7 @@ export default function AIAssistant() {
   return (
     <div className="flex flex-col h-full animate-fade-in" style={{ height: 'calc(100vh - 140px)' }}>
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2"><Bot size={24} className="text-primary-400"/>AI Assistant</h1>
+        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Bot size={24} className="text-primary-400"/>AI Assistant</h1>
         <p className="text-gray-400 text-sm">Powered by Groq — Ask anything about your organization</p>
       </div>
 

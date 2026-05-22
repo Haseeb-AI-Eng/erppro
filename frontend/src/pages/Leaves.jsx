@@ -72,7 +72,7 @@ export default function Leaves() {
       {showModal && <LeaveModal onClose={() => setShowModal(false)} />}
 
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-white">Leaves</h1><p className="text-gray-400 text-sm">{leaves.length} records</p></div>
+        <div><h1 className="text-2xl font-bold text-slate-900">Leaves</h1><p className="text-gray-400 text-sm">{leaves.length} records</p></div>
         <button onClick={() => setShowModal(true)} className="btn-primary"><Plus size={16}/>Apply Leave</button>
       </div>
 

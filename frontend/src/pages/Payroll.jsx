@@ -71,7 +71,7 @@ export default function Payroll() {
       )}
 
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h1 className="text-2xl font-bold text-white">Payroll</h1><p className="text-gray-400 text-sm">{paidCount}/{payrolls.length} paid · Total: ${totalNet.toLocaleString()}</p></div>
+        <div><h1 className="text-2xl font-bold text-slate-900">Payroll</h1><p className="text-gray-400 text-sm">{paidCount}/{payrolls.length} paid · Total: ${totalNet.toLocaleString()}</p></div>
         {canManage && (
           <div className="flex gap-2">
             <button onClick={getAiInsight} disabled={aiLoading} className="btn-secondary">

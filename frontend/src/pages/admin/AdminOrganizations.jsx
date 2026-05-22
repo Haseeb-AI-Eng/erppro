@@ -30,7 +30,7 @@ export default function AdminOrganizations() {
   return (
     <div className="space-y-5 animate-slide-up">
       <div>
-        <h1 className="text-2xl font-bold text-white">Organizations</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Organizations</h1>
         <p className="text-gray-400 text-sm">{orgs.length} organizations on the platform</p>
       </div>
 

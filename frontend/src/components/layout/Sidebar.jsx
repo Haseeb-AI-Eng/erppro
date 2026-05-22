@@ -7,7 +7,8 @@ import { LayoutDashboard, Users, Clock, CheckSquare, DollarSign, Bell, User, Mes
 const employeeItems = [
   { to: '/attendance', icon: Clock, label: 'Attendance' },
   { to: '/employees', icon: Users, label: 'Employees' },
-  { to: '/tasks', icon: CheckSquare, label: 'Tasks' }
+  { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
+  { to: '/chat', icon: MessageSquare, label: 'Chat' }
 ]
 
 const managerItems = [
