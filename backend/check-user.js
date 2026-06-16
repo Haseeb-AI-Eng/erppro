@@ -11,6 +11,7 @@ const bcrypt = require('bcryptjs');
 async function check() {
   await mongoose.connect(process.env.MONGODB_URI, { dbName: process.env.MONGODB_DB_NAME });
   
+  
   const employees = await Employee.find({ email: 'hejaz6784@gmail.com' });
   console.log(`Found ${employees.length} employees with email hejaz6784@gmail.com:`);
   
