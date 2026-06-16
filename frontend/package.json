@@ -4,6 +4,9 @@
   "type": "module",
   "private": true,
   "dependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/cli": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
     "@tanstack/react-query": "^5.28.0",
     "axios": "^1.6.8",
     "date-fns": "^3.6.0",
@@ -28,7 +31,7 @@
     "vite": "^5.2.6"
   },
   "scripts": {
-    "dev": "vite --port 3000 --host",
+    "dev": "vite --port 5000 --host",
     "build": "vite build",
     "preview": "vite preview"
   }

@@ -133,8 +133,8 @@ router.post('/org/register', async (req, res) => {
 //   3. 401 with clear message if not found or password wrong
 router.post('/login', async (req, res) => {
   try {
-    console.log('[LOGIN] Request received:', { email: req.body.email, companyCode: req.body.companyCode });
-    const { email, password, companyCode } = req.body;
+    console.log('[LOGIN] Request received:', { email: req.body.email, companyCode: req.body.companyCode, loginType: req.body.loginType });
+    const { email, password, companyCode, loginType } = req.body;
 
     if (!email || !password) {
       console.warn('[LOGIN] Missing email or password');
@@ -143,6 +143,7 @@ router.post('/login', async (req, res) => {
 
     const cleanEmail = email.toLowerCase().trim();
     let emp = null;
+    let candidates = [];
 
     if (companyCode && companyCode.trim()) {
       // ── Scenario 1: company code provided — scope query to that org ──
@@ -153,28 +154,46 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({ message: 'Invalid company code' });
       }
 
-      console.log('[LOGIN] Found org, looking up employee:', { email: cleanEmail, orgId: org._id });
-      emp = await Employee.findOne({ email: cleanEmail, organizationId: org._id })
+      console.log('[LOGIN] Found org, looking up employees:', { email: cleanEmail, orgId: org._id });
+      candidates = await Employee.find({ email: cleanEmail, organizationId: org._id })
         .populate('organizationId');
     } else {
       // ── Scenario 2: no company code — find by email alone ──
-      // If the same email exists in multiple orgs this returns the first match.
-      // Employees should use companyCode to disambiguate.
-      console.log('[LOGIN] Looking up employee by email only:', cleanEmail);
-      emp = await Employee.findOne({ email: cleanEmail })
+      console.log('[LOGIN] Looking up employees by email only:', cleanEmail);
+      candidates = await Employee.find({ email: cleanEmail })
         .populate('organizationId');
     }
 
-    // Validate employee exists and password matches
-    if (!emp) {
+    if (candidates.length === 0) {
       console.warn('[LOGIN] Employee not found:', cleanEmail);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    console.log('[LOGIN] Employee found, checking password');
-    const passwordMatch = await emp.comparePassword(password);
-    if (!passwordMatch) {
-      console.warn('[LOGIN] Password mismatch for:', cleanEmail);
+    // Sort candidates based on loginType to check preferred role first
+    if (loginType) {
+      candidates.sort((a, b) => {
+        if (loginType === 'org_owner') {
+          if (a.role === 'org_owner' && b.role !== 'org_owner') return -1;
+          if (a.role !== 'org_owner' && b.role === 'org_owner') return 1;
+        } else if (loginType === 'employee') {
+          if (a.role !== 'org_owner' && b.role === 'org_owner') return -1;
+          if (a.role === 'org_owner' && b.role !== 'org_owner') return 1;
+        }
+        return 0;
+      });
+    }
+
+    console.log('[LOGIN] Candidates found, checking passwords');
+    for (const cand of candidates) {
+      const isMatch = await cand.comparePassword(password);
+      if (isMatch) {
+        emp = cand;
+        break;
+      }
+    }
+
+    if (!emp) {
+      console.warn('[LOGIN] Password mismatch for candidates under email:', cleanEmail);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 

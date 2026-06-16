@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "ERP Mobile",
+    "slug": "erp-mobile",
+    "version": "1.0.0",
+    "android": {
+      "package": "com.ejazis.erpmobile"
+    },
+    "extra": {
+      "apiUrl": "http://<your-backend-host>:5000",
+      "eas": {
+        "projectId": "2455471f-8b3e-4709-9457-03eabe6b9b09"
+      }
+    }
+  }
+}

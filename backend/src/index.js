@@ -36,6 +36,9 @@ const io = new Server(server, {
     origin: [
       'http://localhost:3000',
       'http://localhost:3001',
+      'http://localhost:5000',
+      'http://192.168.100.34:3000',
+      'http://192.168.100.8:3000',
       'https://5000-iswlvljncqrn44jaj3ong-ceb3d2bb.us2.manus.computer'
     ],
     methods: ['GET', 'POST'],
@@ -50,6 +53,9 @@ app.use(cors({
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:3001',
+      'http://localhost:5000',
+      'http://192.168.100.34:3000',
+      'http://192.168.100.8:3000',
       'https://5000-iswlvljncqrn44jaj3ong-ceb3d2bb.us2.manus.computer'
     ];
     if (!origin || allowedOrigins.includes(origin)) {
@@ -124,7 +130,10 @@ app.use((req, res) => {
 
 setupSocketHandlers(io);
 
-mongoose.connect(process.env.MONGODB_URI, { dbName: process.env.MONGODB_DB_NAME })
+mongoose.connect(process.env.MONGODB_URI, { 
+  dbName: process.env.MONGODB_DB_NAME,
+  serverSelectionTimeoutMS: 5000
+})
   .then(async () => {
     console.log('MongoDB connected');
     const { seedSuperAdmin } = require('./utils/seed');

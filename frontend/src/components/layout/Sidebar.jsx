@@ -32,21 +32,26 @@ const adminItems = [
   { to: '/admin/organizations', icon: Building2, label: 'Organizations' }
 ]
 
-export default function Sidebar({ open, onToggle }) {
+export default function Sidebar({ open, onToggle, isMobile = false }) {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const isSuperAdmin = user?.role === 'super_admin'
   const items = isSuperAdmin ? adminItems : user?.role === 'employee' ? employeeItems : managerItems
 
   const handleLogout = () => { logout(); navigate('/login') }
+  // On small screens, don't render when closed
+  if (isMobile && !open) return null
 
   return (
     <AnimatePresence>
+      {isMobile && open && (
+        <div className="fixed inset-0 z-30 bg-black/30" onClick={onToggle} />
+      )}
       <motion.aside
         initial={false}
         animate={{ width: open ? 220 : 60 }}
         transition={{ duration: 0.2, ease: 'easeInOut' }}
-        className="bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden shrink-0"
+        className={`bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden shrink-0 ${isMobile ? 'fixed z-40 left-0 top-0' : ''}`}
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-slate-200">

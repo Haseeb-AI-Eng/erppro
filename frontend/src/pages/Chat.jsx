@@ -27,7 +27,10 @@ export default function Chat() {
     if (!socket) return
     const handler = (msg) => {
       if (selectedUser && (msg.senderId?._id === selectedUser._id || msg.recipientId === selectedUser._id)) {
-        setMessages(prev => [...prev, msg])
+        setMessages(prev => {
+          if (prev.some(m => m._id === msg._id)) return prev
+          return [...prev, msg]
+        })
       }
     }
     socket.on('new_message', handler)

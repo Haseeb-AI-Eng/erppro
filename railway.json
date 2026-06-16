@@ -1,0 +1,10 @@
+{
+  "build": {
+    "builder": "dockerfile",
+    "context": "backend"
+  },
+  "deploy": {
+    "startCommand": "node src/index.js",
+    "numReplicas": 1
+  }
+}

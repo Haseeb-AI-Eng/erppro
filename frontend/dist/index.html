@@ -3,13 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#3b82f6" />
+  <meta name="description" content="AI-Powered ERP Platform for modern businesses" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ShineERP" />
+  <link rel="manifest" href="/manifest.json" />
   <title>ShineERP — AI-Powered ERP Platform</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script type="module" crossorigin src="/assets/index-D7zn0P5Z.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-DXcFvEJy.css">
+  <script type="module" crossorigin src="/assets/index-BmsM5VkV.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CQ1AyK7V.css">
 </head>
 <body>
   <div id="root"></div>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch((err) => console.log('SW registration failed:', err))
+      })
+    }
+  </script>
 </body>
 </html>

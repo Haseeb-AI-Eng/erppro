@@ -6,7 +6,7 @@ let socket = null
 export const connectSocket = () => {
   const token = useAuthStore.getState().token
   if (!token || socket?.connected) return socket
-  socket = io(window.location.origin, { auth: { token }, transports: ['websocket', 'polling'] })
+  socket = io(import.meta.env.VITE_API_URL || window.location.origin, { auth: { token }, transports: ['websocket', 'polling'] })
   return socket
 }
 
