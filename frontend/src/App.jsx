@@ -18,6 +18,8 @@ import Analytics from './pages/Analytics'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminOrganizations from './pages/admin/AdminOrganizations'
 import AIAssistant from './pages/AIAssistant'
+import MarketPrices from './pages/MarketPrices'
+import ReceiptScanner from './pages/ReceiptScanner'
 
 const getHomeRoute = (user) => {
   if (!user) return '/login'
@@ -114,6 +116,22 @@ export default function App() {
             element={
               <ProtectedRoute roles={['org_owner', 'hr_manager', 'team_lead']}>
                 <AIAssistant />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="market-prices"
+            element={
+              <ProtectedRoute roles={['org_owner', 'hr_manager', 'team_lead']}>
+                <MarketPrices />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="receipt-scanner"
+            element={
+              <ProtectedRoute roles={['org_owner', 'hr_manager', 'team_lead']}>
+                <ReceiptScanner />
               </ProtectedRoute>
             }
           />

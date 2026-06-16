@@ -133,4 +133,26 @@ router.get('/health-score', async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
+const multer = require('multer');
+const upload = multer();
+
+router.post('/scan-receipt', upload.single('receipt'), async (req, res) => {
+  try {
+    const file = req.file;
+    const ocrText = req.body.ocrText || '';
+    if (!file && !ocrText) {
+      return res.status(400).json({ message: 'No receipt file or OCR text provided' });
+    }
+    const filename = file ? file.originalname : 'receipt.txt';
+    const buffer = file ? file.buffer : null;
+    
+    const { scanReceipt } = require('../services/groq');
+    const summary = await scanReceipt(filename, buffer, ocrText);
+    res.json({ summary });
+  } catch (err) {
+    console.error('Scan receipt error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

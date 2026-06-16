@@ -12,14 +12,26 @@ const signRefresh = (payload) => jwt.sign(payload, process.env.JWT_REFRESH_SECRE
 // ─── Super Admin Login ────────────────────────────────────────────────────────
 router.post('/super-admin/login', async (req, res) => {
   try {
+    console.log('[SUPER-ADMIN-LOGIN] Request received:', { email: req.body.email });
     const { email, password } = req.body;
-    if (!email || !password)
+    if (!email || !password) {
+      console.warn('[SUPER-ADMIN-LOGIN] Missing email or password');
       return res.status(400).json({ message: 'Email and password are required' });
+    }
 
     const admin = await SuperAdmin.findOne({ email: email.toLowerCase().trim() });
-    if (!admin || !(await admin.comparePassword(password)))
+    if (!admin) {
+      console.warn('[SUPER-ADMIN-LOGIN] Admin not found:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
+    const passwordMatch = await admin.comparePassword(password);
+    if (!passwordMatch) {
+      console.warn('[SUPER-ADMIN-LOGIN] Password mismatch for:', email);
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    console.log('[SUPER-ADMIN-LOGIN] SUCCESS for:', email);
     const payload = { id: admin._id, role: 'super_admin', email: admin.email };
     res.json({
       token:        signToken(payload),
@@ -27,29 +39,40 @@ router.post('/super-admin/login', async (req, res) => {
       user: { id: admin._id, name: admin.name, email: admin.email, role: 'super_admin' }
     });
   } catch (err) {
-    console.error('Super admin login error:', err);
-    res.status(500).json({ message: err.message });
+    console.error('[SUPER-ADMIN-LOGIN] EXCEPTION:', {
+      message: err.message,
+      stack: err.stack,
+      email: req.body.email
+    });
+    res.status(500).json({ message: 'Login failed: ' + err.message });
   }
 });
 
 // ─── Organization Register ────────────────────────────────────────────────────
 router.post('/org/register', async (req, res) => {
   try {
+    console.log('[ORG-REGISTER] Request received:', { email: req.body.email });
     const { name, email, password, industry, size, phone, ownerName } = req.body;
 
-    if (!name || !email || !password)
+    if (!name || !email || !password) {
+      console.warn('[ORG-REGISTER] Missing required fields');
       return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email))
+    if (!emailRegex.test(email)) {
+      console.warn('[ORG-REGISTER] Invalid email format:', email);
       return res.status(400).json({ message: 'Invalid email address format' });
+    }
 
     const cleanEmail = email.toLowerCase().trim();
 
     // Check org email duplicate
     const existing = await Organization.findOne({ email: cleanEmail });
-    if (existing)
+    if (existing) {
+      console.warn('[ORG-REGISTER] Organization email already registered:', cleanEmail);
       return res.status(400).json({ message: 'Organization email already registered' });
+    }
 
     // Create organization — pre('save') hook generates the code
     const org = await Organization.create({
@@ -110,48 +133,67 @@ router.post('/org/register', async (req, res) => {
 //   3. 401 with clear message if not found or password wrong
 router.post('/login', async (req, res) => {
   try {
+    console.log('[LOGIN] Request received:', { email: req.body.email, companyCode: req.body.companyCode });
     const { email, password, companyCode } = req.body;
 
-    if (!email || !password)
+    if (!email || !password) {
+      console.warn('[LOGIN] Missing email or password');
       return res.status(400).json({ message: 'Email and password are required' });
+    }
 
     const cleanEmail = email.toLowerCase().trim();
     let emp = null;
 
     if (companyCode && companyCode.trim()) {
       // ── Scenario 1: company code provided — scope query to that org ──
+      console.log('[LOGIN] Looking up organization with code:', companyCode);
       const org = await Organization.findOne({ code: companyCode.toUpperCase().trim() });
-      if (!org)
+      if (!org) {
+        console.warn('[LOGIN] Organization not found with code:', companyCode);
         return res.status(401).json({ message: 'Invalid company code' });
+      }
 
+      console.log('[LOGIN] Found org, looking up employee:', { email: cleanEmail, orgId: org._id });
       emp = await Employee.findOne({ email: cleanEmail, organizationId: org._id })
         .populate('organizationId');
     } else {
       // ── Scenario 2: no company code — find by email alone ──
       // If the same email exists in multiple orgs this returns the first match.
       // Employees should use companyCode to disambiguate.
+      console.log('[LOGIN] Looking up employee by email only:', cleanEmail);
       emp = await Employee.findOne({ email: cleanEmail })
         .populate('organizationId');
     }
 
     // Validate employee exists and password matches
-    if (!emp)
+    if (!emp) {
+      console.warn('[LOGIN] Employee not found:', cleanEmail);
       return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
+    console.log('[LOGIN] Employee found, checking password');
     const passwordMatch = await emp.comparePassword(password);
-    if (!passwordMatch)
+    if (!passwordMatch) {
+      console.warn('[LOGIN] Password mismatch for:', cleanEmail);
       return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
     // Account status checks
-    if (emp.status === 'inactive')
+    if (emp.status === 'inactive') {
+      console.warn('[LOGIN] Account inactive:', cleanEmail);
       return res.status(403).json({ message: 'Account inactive. Contact HR.' });
+    }
 
     const org = emp.organizationId;
-    if (!org)
-      return res.status(403).json({ message: 'Organization not found' });
+    if (!org) {
+      console.error('[LOGIN] Organization missing for employee:', cleanEmail);
+      return res.status(500).json({ message: 'Organization data missing' });
+    }
 
-    if (org.status === 'suspended')
+    if (org.status === 'suspended') {
+      console.warn('[LOGIN] Organization suspended:', org._id);
       return res.status(403).json({ message: 'Organization suspended. Contact support.' });
+    }
 
     // Record login history (non-blocking)
     emp.loginHistory.push({ ip: req.ip, device: req.headers['user-agent'], timestamp: new Date() });
@@ -159,6 +201,7 @@ router.post('/login', async (req, res) => {
     emp.lastSeen = new Date();
     await emp.save();
 
+    console.log('[LOGIN] SUCCESS for:', cleanEmail);
     const payload = { id: emp._id, role: emp.role, organizationId: org._id, email: emp.email };
     res.json({
       token:        signToken(payload),
@@ -179,8 +222,12 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ message: err.message });
+    console.error('[LOGIN] EXCEPTION:', {
+      message: err.message,
+      stack: err.stack,
+      email: req.body.email
+    });
+    res.status(500).json({ message: 'Login failed: ' + err.message });
   }
 });
 
@@ -271,6 +318,33 @@ router.get('/me', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error('Get me error:', err);
     res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── Reset Password (for testing/recovery) ───────────────────────────────────
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    if (!email || !newPassword) {
+      return res.status(400).json({ message: 'Email and new password are required' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const emp = await Employee.findOne({ email: cleanEmail });
+
+    if (!emp) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
+    // Update password (pre-save hook will hash it)
+    emp.password = newPassword;
+    await emp.save();
+
+    console.log('[RESET-PASSWORD] Password reset for:', cleanEmail);
+    res.json({ message: 'Password reset successfully. You can now login with the new password.' });
+  } catch (err) {
+    console.error('[RESET-PASSWORD] ERROR:', err.message);
+    res.status(500).json({ message: 'Password reset failed: ' + err.message });
   }
 });
 

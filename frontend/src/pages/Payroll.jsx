@@ -52,18 +52,18 @@ export default function Payroll() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <motion.div initial={{scale:0.9,opacity:0}} animate={{scale:1,opacity:1}} className="glass rounded-2xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-white font-bold">Edit Payroll</h2>
-              <button onClick={()=>setEditPayroll(null)} className="text-gray-400 hover:text-white"><X size={20}/></button>
+              <h2 className="text-slate-900 font-bold">Edit Payroll</h2>
+              <button onClick={()=>setEditPayroll(null)} className="text-slate-500 hover:text-slate-900"><X size={20}/></button>
             </div>
             <div className="space-y-3">
               {[['bonus','Bonus ($)'],['deductions','Deductions ($)'],['notes','Notes']].map(([k,l]) => (
-                <div key={k}><label className="text-xs text-gray-400 block mb-1">{l}</label>
+                <div key={k}><label className="text-xs text-slate-600 block mb-1">{l}</label>
                   <input className="input text-sm" type={k==='notes'?'text':'number'} value={editPayroll[k]||''} onChange={e=>setEditPayroll({...editPayroll,[k]:e.target.value})} />
                 </div>
               ))}
               <div className="flex gap-2 pt-2">
                 <button onClick={()=>setEditPayroll(null)} className="btn-secondary flex-1 justify-center">Cancel</button>
-                <button onClick={async()=>{try{await api.put(`/payroll/${editPayroll._id}`,editPayroll);toast.success('Updated');qc.invalidateQueries(['payroll']);setEditPayroll(null)}catch{toast.error('Error')}}} className="btn-primary flex-1 justify-center">Save</button>
+                <button onClick={async()=>{try{const updated = {...editPayroll}; updated.netSalary = Math.max(0, (updated.basicSalary||0) + (updated.overtimePay||0) + (updated.bonus||0) - (updated.deductions||0) - (updated.tax||0)); await api.put(`/payroll/${editPayroll._id}`,updated);toast.success('Updated');qc.invalidateQueries(['payroll']);setEditPayroll(null)}catch{toast.error('Error')}}} className="btn-primary flex-1 justify-center">Save</button>
               </div>
             </div>
           </motion.div>
@@ -71,7 +71,7 @@ export default function Payroll() {
       )}
 
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h1 className="text-2xl font-bold text-slate-900">Payroll</h1><p className="text-gray-400 text-sm">{paidCount}/{payrolls.length} paid · Total: ${totalNet.toLocaleString()}</p></div>
+        <div><h1 className="text-2xl font-bold text-slate-900">Payroll</h1><p className="text-slate-600 text-sm">{paidCount}/{payrolls.length} paid · Total: ${totalNet.toLocaleString()}</p></div>
         {canManage && (
           <div className="flex gap-2">
             <button onClick={getAiInsight} disabled={aiLoading} className="btn-secondary">
@@ -103,30 +103,30 @@ export default function Payroll() {
       {isLoading ? <div className="flex justify-center py-20"><Loader size={32} className="animate-spin text-primary-400"/></div> : (
         <div className="card overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="border-b border-dark-400 text-gray-400 text-xs">
+            <thead><tr className="border-b border-slate-200 text-slate-600 text-xs">
               <th className="text-left py-2 px-2">Employee</th>
               <th className="text-left py-2 px-2">Basic</th>
               <th className="text-left py-2 px-2">Overtime</th>
               <th className="text-left py-2 px-2">Bonus</th>
               <th className="text-left py-2 px-2">Deductions</th>
               <th className="text-left py-2 px-2">Tax</th>
-              <th className="text-left py-2 px-2 text-white">Net</th>
+              <th className="text-left py-2 px-2 text-slate-900 font-bold">Net</th>
               <th className="text-left py-2 px-2">Status</th>
               {canManage && <th className="text-left py-2 px-2">Actions</th>}
             </tr></thead>
             <tbody>
               {payrolls.map(p => (
-                <tr key={p._id} className="border-b border-dark-400/50 hover:bg-dark-700/30">
+                <tr key={p._id} className="border-b border-slate-200 hover:bg-slate-50">
                   <td className="py-2 px-2">
-                    <p className="text-white font-medium">{p.employeeId?.name}</p>
-                    <p className="text-gray-500 text-xs">{p.employeeId?.department}</p>
+                    <p className="text-slate-900 font-medium">{p.employeeId?.name}</p>
+                    <p className="text-slate-500 text-xs">{p.employeeId?.department}</p>
                   </td>
-                  <td className="py-2 px-2 text-gray-300">${p.basicSalary?.toLocaleString()}</td>
-                  <td className="py-2 px-2 text-green-400">+${p.overtimePay}</td>
-                  <td className="py-2 px-2 text-green-400">+${p.bonus}</td>
-                  <td className="py-2 px-2 text-red-400">-${p.deductions}</td>
-                  <td className="py-2 px-2 text-red-400">-${p.tax}</td>
-                  <td className="py-2 px-2 text-white font-bold">${p.netSalary?.toLocaleString()}</td>
+                  <td className="py-2 px-2 text-slate-700">${p.basicSalary?.toLocaleString()}</td>
+                  <td className="py-2 px-2 text-green-600 font-semibold">+${p.overtimePay}</td>
+                  <td className="py-2 px-2 text-green-600 font-semibold">+${p.bonus}</td>
+                  <td className="py-2 px-2 text-red-600 font-semibold">-${p.deductions}</td>
+                  <td className="py-2 px-2 text-red-600 font-semibold">-${p.tax}</td>
+                  <td className="py-2 px-2 text-slate-900 font-bold">${p.netSalary?.toLocaleString()}</td>
                   <td className="py-2 px-2"><span className={`badge ${p.status==='paid'?'status-present':p.status==='pending'?'status-pending':'status-in_progress'}`}>{p.status}</span></td>
                   {canManage && (
                     <td className="py-2 px-2">

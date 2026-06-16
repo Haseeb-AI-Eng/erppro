@@ -18,17 +18,40 @@ router.post('/generate', requireOrgRole('org_owner', 'hr_manager'), async (req, 
       if (existing) continue;
       const dateStr = `${year}-${String(month).padStart(2,'0')}`;
       const attRecords = await Attendance.find({ organizationId: req.organizationId, employeeId: emp._id, date: { $regex: `^${dateStr}` } });
+      
+      // Calculate attendance stats
       const presentDays = attRecords.filter(a => ['present','late'].includes(a.status)).length;
+      const absentRecordedDays = attRecords.filter(a => a.status === 'absent').length;
       const workingDays = 22;
+      
+      // Only deduct for RECORDED absences, not for missing attendance data
+      // If employee has attendance records, use those. Otherwise assume full attendance.
+      const deductibleDays = attRecords.length > 0 ? absentRecordedDays : 0;
+      
       const overtimeHours = attRecords.reduce((s, a) => s + (a.overtime || 0), 0);
       const dailyRate = emp.salary / workingDays;
       const basicSalary = emp.salary;
       const overtimePay = Math.round(overtimeHours * (dailyRate / 8) * 1.5);
-      const absentDays = Math.max(0, workingDays - presentDays);
-      const deductions = Math.round(absentDays * dailyRate);
+      const deductions = Math.round(deductibleDays * dailyRate);
       const tax = Math.round((basicSalary + overtimePay - deductions) * 0.05);
       const netSalary = Math.max(0, basicSalary + overtimePay - deductions - tax + (req.body.bonus || 0));
-      const p = await Payroll.create({ organizationId: req.organizationId, employeeId: emp._id, month, year, basicSalary, workingDays, presentDays, absentDays, overtimeHours, overtimePay, deductions, tax, netSalary, generatedBy: req.user.id });
+      
+      const p = await Payroll.create({ 
+        organizationId: req.organizationId, 
+        employeeId: emp._id, 
+        month, 
+        year, 
+        basicSalary, 
+        workingDays, 
+        presentDays, 
+        absentDays: deductibleDays, 
+        overtimeHours, 
+        overtimePay, 
+        deductions, 
+        tax, 
+        netSalary, 
+        generatedBy: req.user.id 
+      });
       payrolls.push(p);
     }
     res.json({ payrolls, generated: payrolls.length });
@@ -89,10 +112,42 @@ router.put('/:id', requireOrgRole('org_owner', 'hr_manager'), async (req, res) =
   try {
     const p = await Payroll.findOne({ _id: req.params.id, organizationId: req.organizationId });
     if (!p) return res.status(404).json({ message: 'Not found' });
-    Object.assign(p, req.body);
-    p.netSalary = Math.max(0, p.basicSalary + p.overtimePay + p.bonus - p.deductions - p.tax);
+    
+    // Only update allowed fields with validation
+    if (req.body.bonus !== undefined) p.bonus = Math.max(0, parseFloat(req.body.bonus) || 0);
+    if (req.body.deductions !== undefined) {
+      const newDeductions = Math.max(0, parseFloat(req.body.deductions) || 0);
+      // Prevent deductions from exceeding basicSalary + overtime + bonus
+      const maxDeductions = (p.basicSalary || 0) + (p.overtimePay || 0) + (p.bonus || 0);
+      p.deductions = Math.min(newDeductions, maxDeductions);
+    }
+    if (req.body.notes !== undefined) p.notes = req.body.notes;
+    
+    // Recalculate net salary with current values
+    p.netSalary = Math.max(0, (p.basicSalary || 0) + (p.overtimePay || 0) + (p.bonus || 0) - (p.deductions || 0) - (p.tax || 0));
     await p.save();
     res.json({ payroll: p });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// Delete payroll record
+router.delete('/:id', requireOrgRole('org_owner', 'hr_manager'), async (req, res) => {
+  try {
+    const p = await Payroll.findOneAndDelete({ _id: req.params.id, organizationId: req.organizationId });
+    if (!p) return res.status(404).json({ message: 'Payroll not found' });
+    res.json({ message: 'Payroll deleted successfully', payroll: p });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// Delete all payrolls for a specific month/year
+router.delete('/batch/month', requireOrgRole('org_owner', 'hr_manager'), async (req, res) => {
+  try {
+    const { month, year } = req.body;
+    if (!month || !year) {
+      return res.status(400).json({ message: 'Month and year are required' });
+    }
+    const result = await Payroll.deleteMany({ organizationId: req.organizationId, month: parseInt(month), year: parseInt(year) });
+    res.json({ message: `Deleted ${result.deletedCount} payroll records`, deletedCount: result.deletedCount });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 

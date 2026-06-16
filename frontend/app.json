@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "a492df50-5f9b-48c3-9910-42f3b6432ffc"
+      }
+    },
+    "android": {
+      "package": "com.ejazis.erpfrontend"
+    }
+  }
+}

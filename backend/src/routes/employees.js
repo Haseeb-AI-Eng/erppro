@@ -59,7 +59,9 @@ router.post('/', requireOrgRole('org_owner', 'hr_manager'), async (req, res) => 
     if (existing) return res.status(400).json({ message: 'Employee with this email already exists' });
     const rawPassword = Math.floor(100000 + Math.random() * 900000).toString();
     const emp = await Employee.create({ name, email, department, designation, salary, organizationId: req.organizationId, password: rawPassword, role: 'employee' });
-    await sendWelcomeEmail(emp, req.employee.organizationId.name, rawPassword);
+    const Organization = require('../models/Organization');
+    const org = await Organization.findById(req.organizationId);
+    await sendWelcomeEmail(emp, org?.name || 'ShineERP', rawPassword);
     const io = req.app.get('io');
     emitToOrg(io, req.organizationId, 'employee_added', { employee: emp });
     res.status(201).json({ employee: { ...emp.toObject(), password: undefined } });

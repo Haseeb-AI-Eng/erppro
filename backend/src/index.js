@@ -1,4 +1,9 @@
 require('dotenv').config();
+
+// Configure DNS for MongoDB SRV resolution
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -27,15 +32,50 @@ const { setupSocketHandlers } = require('./services/socket');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: '*', methods: ['GET', 'POST'] }
+  cors: {
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://5000-iswlvljncqrn44jaj3ong-ceb3d2bb.us2.manus.computer'
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
 });
 
 // Security & parsing middleware
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors({ origin: '*', credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://5000-iswlvljncqrn44jaj3ong-ceb3d2bb.us2.manus.computer'
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  const originalJson = res.json;
+  res.json = function(data) {
+    console.log(`[${new Date().toISOString()}] Response: ${req.method} ${req.path} - Status: ${res.statusCode}`);
+    return originalJson.call(this, data);
+  };
+  next();
+});
 
 // Rate limiting
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 500 });
@@ -64,8 +104,17 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date() }
 
 // Global error handler — catches anything routes miss
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(err.status || 500).json({ message: err.message || 'Internal server error' });
+  console.error(`[${new Date().toISOString()}] ERROR on ${req.method} ${req.path}:`);
+  console.error('Error Details:', {
+    message: err.message,
+    stack: err.stack,
+    code: err.code,
+    statusCode: err.statusCode,
+  });
+  res.status(err.status || 500).json({ 
+    message: err.message || 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
 });
 
 // 404 handler

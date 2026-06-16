@@ -2,7 +2,7 @@ import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../store/authStore'
-import { LayoutDashboard, Users, Clock, CheckSquare, DollarSign, Bell, User, MessageSquare, Calendar, BarChart2, Bot, Building2, LogOut, Zap, ChevronLeft } from 'lucide-react'
+import { LayoutDashboard, Users, Clock, CheckSquare, DollarSign, Bell, User, MessageSquare, Calendar, BarChart2, Bot, Building2, LogOut, Zap, ChevronLeft, Landmark, Receipt } from 'lucide-react'
 
 const employeeItems = [
   { to: '/attendance', icon: Clock, label: 'Attendance' },
@@ -21,6 +21,8 @@ const managerItems = [
   { to: '/chat', icon: MessageSquare, label: 'Chat' },
   { to: '/analytics', icon: BarChart2, label: 'Analytics' },
   { to: '/ai-assistant', icon: Bot, label: 'AI Assistant' },
+  { to: '/market-prices', icon: Landmark, label: 'Market Prices' },
+  { to: '/receipt-scanner', icon: Receipt, label: 'Paylist Scanner' },
   { to: '/notifications', icon: Bell, label: 'Notifications' },
   { to: '/profile', icon: User, label: 'Profile' }
 ]
